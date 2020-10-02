@@ -1,0 +1,104 @@
+# 
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+displayName: Scheduled Autoscaler Dashboard
+gridLayout:
+  columns: '2'
+  widgets:
+  - title: 'Scheduled Metric (desired # of Pods)'
+    xyChart:
+      chartOptions:
+        mode: COLOR
+      dataSets:
+      - minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="custom.googleapis.com/scheduled_autoscaler_example" resource.type="k8s_cluster"
+            secondaryAggregation: {}
+      timeshiftDuration: 0s
+      yAxis:
+        label: y1Axis
+        scale: LINEAR
+  - title: CPU Utilization (used vs requested)
+    xyChart:
+      chartOptions:
+        mode: COLOR
+      dataSets:
+      - minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              crossSeriesReducer: REDUCE_SUM
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="kubernetes.io/container/cpu/request_cores" resource.type="k8s_container"
+              resource.label."cluster_name"="scheduled-autoscaler" metadata.user_labels."run"="php-apache"
+            secondaryAggregation: {}
+      - minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              crossSeriesReducer: REDUCE_SUM
+              perSeriesAligner: ALIGN_RATE
+            filter: metric.type="kubernetes.io/container/cpu/core_usage_time" resource.type="k8s_container"
+            secondaryAggregation: {}
+      timeshiftDuration: 0s
+      yAxis:
+        label: y1Axis
+        scale: LINEAR
+  - title: 'Number of Pods (scheduled vs actual) + Mean CPU Utilization'
+    xyChart:
+      chartOptions:
+        mode: COLOR
+      dataSets:
+      - minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              crossSeriesReducer: REDUCE_COUNT
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="kubernetes.io/container/cpu/request_cores" resource.type="k8s_container"
+              resource.label."cluster_name"="scheduled-autoscaler" metadata.user_labels."run"="php-apache"
+            secondaryAggregation: {}
+      - minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              crossSeriesReducer: REDUCE_MEAN
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="kubernetes.io/container/cpu/request_utilization"
+              resource.type="k8s_container" resource.label."cluster_name"="scheduled-autoscaler"
+              metadata.user_labels."run"="php-apache"
+            secondaryAggregation: {}
+      - minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="custom.googleapis.com/scheduled_autoscaler_example" resource.type="k8s_cluster"
+            secondaryAggregation: {}
+      thresholds:
+      - value: 0.6
+      timeshiftDuration: 0s
+      yAxis:
+        label: y1Axis
+        scale: LOG10
